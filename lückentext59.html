@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lückentext-Trainer: Russische Adjektive im Dativ</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --error-color: #e74c3c;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 3px solid var(--secondary-color);
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+        }
+
+        .instruction {
+            background: #eef2f7;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 5px solid var(--secondary-color);
+            font-size: 0.95rem;
+        }
+
+        .exercise-item {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .sentence {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Dropdown Stile */
+        select {
+            padding: 6px 10px;
+            font-size: 1rem;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            background-color: white;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        select.correct {
+            border-color: var(--success-color);
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        select.incorrect {
+            border-color: var(--error-color);
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        .btn-reset { background: #95a5a6; color: white; }
+        .btn-solution { background: var(--secondary-color); color: white; }
+        button:hover { opacity: 0.8; }
+
+        @media (max-width: 600px) {
+            .sentence { font-size: 1rem; }
+            .container { padding: 15px; }
+            .controls { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Russisch-Assistent</h1>
+        <h2>Adjektive im Dativ: Dropdown-Trainer</h2>
+    </header>
+
+    <div class="instruction">
+        <strong>Anleitung:</strong> Wähle die korrekte Dativ-Endung für das Adjektiv aus. Achte darauf, ob das Substantiv männlich, weiblich oder sächlich ist und ob es sich um eine harte oder weiche Endung handelt.
+    </div>
+
+    <div id="exercise-list"></div>
+</div>
+
+<script>
+    const exercises = [
+        { id: 1, start: "Катя помогает", end: "человеку.", options: ["молодому", "молодой", "молодой", "молодое"], correct: "молодому", hint: "молодой" },
+        { id: 2, start: "Мы рады", end: "погоде.", options: ["хорошей", "хорошую", "хорошая", "хорошее"], correct: "хорошей", hint: "хорошая" },
+        { id: 3, start: "Он идёт к", end: "дому.", options: ["новому", "новый", "нового", "новым"], correct: "новому", hint: "новый" },
+        { id: 4, start: "Она звонит", end: "подруге.", options: ["лучшей", "лучшую", "лучшая", "лучшим"], correct: "лучшей", hint: "лучшая" },
+        { id: 5, start: "Я подошёл к", end: "зданию.", options: ["синему", "синее", "синяя", "синюю"], correct: "синему", hint: "синее" },
+        { id: 6, start: "Помоги", end: "другу.", options: ["лучшему", "лучшим", "лучший", "лучшего"], correct: "лучшему", hint: "лучший" },
+        { id: 7, start: "Она пишет", end: "бабушке.", options: ["любимой", "любимую", "любимая", "любимым"], correct: "любимой", hint: "любимая" },
+        { id: 8, start: "Мы идём к", end: "врачу.", options: ["хорошему", "хороший", "хорошая", "хорошим"], correct: "хорошему", hint: "хороший" },
+        { id: 9, start: "Подойди к", end: "окну.", options: ["большому", "большое", "большая", "большую"], correct: "большому", hint: "большое" },
+        { id: 10, start: "Она идёт к", end: "сестре.", options: ["младшей", "младшую", "младшая", "младшим"], correct: "младшей", hint: "младшая" },
+        { id: 11, start: "Я рад", end: "солнцу.", options: ["летнему", "летнее", "летняя", "летнюю"], correct: "летнему", hint: "летнее" },
+        { id: 12, start: "К", end: "празднику мы печём торт.", options: ["каждому", "каждый", "каждая", "каждую"], correct: "каждому", hint: "каждый" },
+        { id: 13, start: "Передай привет", end: "учительнице.", options: ["новой", "новую", "новая", "новое"], correct: "новой", hint: "новая" },
+        { id: 14, start: "Мы едем к", end: "родственнику.", options: ["дальнему", "дальний", "дальняя", "дальнюю"], correct: "дальнему", hint: "дальний" },
+        { id: 15, start: "Собака бежит к", end: "мальчику.", options: ["маленькому", "маленький", "маленькая", "маленькую"], correct: "маленькому", hint: "маленький" },
+        { id: 16, start: "Помоги этой", end: "женщине.", options: ["бедной", "бедную", "бедная", "бедное"], correct: "бедной", hint: "бедная" },
+        { id: 17, start: "Мы подошли к", end: "озеру.", options: ["красивому", "красивое", "красивая", "красивую"], correct: "красивому", hint: "красивое" },
+        { id: 18, start: "Мама рада", end: "снегу.", options: ["первому", "первый", "первая", "первую"], correct: "первому", hint: "первый" },
+        { id: 19, start: "Иди к", end: "аптеке.", options: ["соседней", "соседняя", "соседнюю", "соседним"], correct: "соседней", hint: "соседняя" },
+        { id: 20, start: "Позвони своему", end: "брату.", options: ["старшему", "старший", "старшая", "старшим"], correct: "старшему", hint: "старший" }
+    ];
+
+    function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function renderExercises() {
+        const list = document.getElementById('exercise-list');
+        list.innerHTML = '';
+        
+        exercises.forEach((ex) => {
+            const item = document.createElement('div');
+            item.className = 'exercise-item';
+            item.id = `ex-block-${ex.id}`;
+            
+            // Zufällige Reihenfolge der Optionen für das Dropdown
+            const shuffledOptions = shuffle([...ex.options]);
+            
+            item.innerHTML = `
+                <div class="sentence">
+                    <span>${ex.start}</span>
+                    <select id="select-${ex.id}" onchange="checkAnswer(${ex.id})">
+                        <option value="">-- ? --</option>
+                        ${shuffledOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                    </select>
+                    <span>${ex.end}</span>
+                    <small style="color: #7f8c8d; margin-left: auto;">(${ex.hint})</small>
+                </div>
+                <div class="controls">
+                    <button class="btn-reset" onclick="resetExercise(${ex.id})">Zurücksetzen & Mischen</button>
+                    <button class="btn-solution" onclick="showSolution(${ex.id})">Lösung anzeigen</button>
+                </div>
+            `;
+            list.appendChild(item);
+        });
+    }
+
+    window.checkAnswer = function(id) {
+        const select = document.getElementById(`select-${id}`);
+        const ex = exercises.find(e => e.id === id);
+        
+        if (select.value === "") {
+            select.className = "";
+        } else if (select.value === ex.correct) {
+            select.className = "correct";
+        } else {
+            select.className = "incorrect";
+        }
+    };
+
+    window.resetExercise = function(id) {
+        const select = document.getElementById(`select-${id}`);
+        const ex = exercises.find(e => e.id === id);
+        
+        // Optionen neu mischen
+        const shuffledOptions = shuffle([...ex.options]);
+        let optionsHtml = '<option value="">-- ? --</option>';
+        shuffledOptions.forEach(opt => {
+            optionsHtml += `<option value="${opt}">${opt}</option>`;
+        });
+        
+        select.innerHTML = optionsHtml;
+        select.value = "";
+        select.className = "";
+    };
+
+    window.showSolution = function(id) {
+        const select = document.getElementById(`select-${id}`);
+        const ex = exercises.find(e => e.id === id);
+        
+        // Falls die korrekte Lösung nicht im aktuellen (gemischten) Set ist (theoretisch unmöglich hier)
+        // Aber wir setzen den Wert einfach
+        select.value = ex.correct;
+        select.className = "correct";
+    };
+
+    // Initialisierung beim Laden
+    window.onload = renderExercises;
+</script>
+
+</body>
+</html>
