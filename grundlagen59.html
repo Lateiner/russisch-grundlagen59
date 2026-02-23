@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktives Arbeitsblatt: Russische Adjektive im Dativ</title>
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --error-color: #e74c3c;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        h1, h2 { text-align: center; margin-bottom: 10px; }
+
+        .intro {
+            background: #eef2f3;
+            padding: 15px;
+            border-left: 5px solid var(--secondary-color);
+            border-radius: 5px;
+            margin-bottom: 25px;
+        }
+
+        .exercise-card {
+            border: 2px solid #ecf0f1;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            background: #fff;
+        }
+
+        .task-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--secondary-color);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Eingabefelder Stile */
+        select, .drop-zone {
+            padding: 8px;
+            border: 2px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 16px;
+            background: #fff;
+            transition: all 0.3s;
+            margin: 5px 0;
+        }
+
+        .correct { border-color: var(--success-color) !important; background-color: #d4edda !important; color: #155724; }
+        .incorrect { border-color: var(--error-color) !important; background-color: #f8d7da !important; color: #721c24; }
+
+        .radio-group { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+        .radio-item { 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            transition: background 0.2s;
+        }
+        .radio-item:hover { background: #f9f9f9; }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        .btn-reset { background-color: #e67e22; color: white; }
+        .btn-sol { background-color: var(--secondary-color); color: white; }
+        button:active { transform: scale(0.95); }
+
+        /* Drag & Drop */
+        .word-bank {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            min-height: 40px;
+        }
+
+        .drag-item {
+            padding: 5px 12px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 4px;
+            cursor: grab;
+        }
+
+        .drop-zone {
+            display: inline-block;
+            min-width: 140px;
+            min-height: 34px;
+            vertical-align: middle;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .complex-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Russische Grammatik</h1>
+    <h2>Grundlagen: Adjektive im Dativ (3. Fall)</h2>
+
+    <div class="intro">
+        <p>Der Dativ antwortet auf die Fragen <strong>кому?</strong> (wem?) und <strong>к кому? / куда?</strong> (zu wem? / wohin?).</p>
+        <ul>
+            <li><strong>Maskulinum / Neutrum:</strong> Endung <strong>-ому</strong> (hart) oder <strong>-ему</strong> (weich/Zischlaut).</li>
+            <li><strong>Femininum:</strong> Endung <strong>-ой</strong> (hart) oder <strong>-ей</strong> (weich/Zischlaut).</li>
+        </ul>
+        <p><em>Hinweis: Alle Übungen geben sofortiges Feedback. Mit „Lösung anzeigen“ wird die Antwort direkt ins Feld eingetragen.</em></p>
+    </div>
+
+    <div id="exercise-container"></div>
+</div>
+
+<script>
+    const taskData = [
+        { id: 1, type: 'select', text: 'Катя помогает ... человеку.', base: 'молодой', options: ['молодому', 'молодой', 'молодое'], ans: 'молодому' },
+        { id: 2, type: 'select', text: 'Он идёт к ... дому.', base: 'новый', options: ['новому', 'новой', 'нового'], ans: 'новому' },
+        { id: 3, type: 'select', text: 'Мы звоним ... врачу.', base: 'хороший', options: ['хорошему', 'хорошому', 'хорошую'], ans: 'хорошему' },
+        { id: 4, type: 'radio', text: 'Wähle die richtige Form für: „zu einer strengen Mutter“', options: ['к строгой маме', 'к строгому маме', 'к строгую маме'], ans: 'к строгой маме' },
+        { id: 5, type: 'select', text: 'Я иdu к ... сестре.', base: 'младшая', options: ['младшей', 'младшой', 'мladшую'], ans: 'младшей' },
+        { id: 6, type: 'select', text: 'Подойди к ... окну.', base: 'синее', options: ['синему', 'синому', 'синей'], ans: 'синему' },
+        { id: 7, type: 'radio', text: 'Wähle: „einem fremden Kind helfen“', options: ['помогать чужому ребенку', 'помогать чужой ребенку', 'помогать чужим ребенку'], ans: 'помогать чужому ребенку' },
+        { id: 8, type: 'select', text: 'Она пишет ... бабушке.', base: 'любимая', options: ['любимой', 'любимому', 'любимую'], ans: 'любимой' },
+        { id: 9, type: 'select', text: 'Мы рады ... погоде.', base: 'хорошая', options: ['хорошей', 'хорошой', 'хорошую'], ans: 'хорошей' },
+        { id: 10, type: 'select', text: 'Идти к ... кинотеатру.', base: 'соседний', options: ['соседнему', 'соседней', 'соседним'], ans: 'соседнему' },
+
+        // Aufgaben 11-15: Erweitert / Komplex
+        { id: 11, type: 'complex', text: 'Setze Adjektiv und Substantiv in den Dativ:', base: 'синее здание', options1: ['синему', 'синей', 'синому'], options2: ['зданию', 'здание', 'здания'], ans1: 'синему', ans2: 'зданию' },
+        { id: 12, type: 'complex', text: 'Setze Adjektiv und Substantiv in den Dativ:', base: 'хорошая учительница', options1: ['хорошей', 'хорошой', 'хорошую'], options2: ['учительнице', 'учительницы', 'учительницу'], ans1: 'хорошей', ans2: 'учительнице' },
+        { id: 13, type: 'drag', text: 'Ziehe die richtige Form in die Lücke: „помогать ... человеку“', base: 'высокий', bank: ['высокому', 'высокой', 'высокое', 'высоких'], ans: 'высокому' },
+        { id: 14, type: 'complex', text: 'Wähle die passende Kombination (Präposition + Adj + Noun):', base: 'другая библиотека', options1: ['к другой', 'к другому', 'к другое'], options2: ['библиотеке', 'библиотеки', 'библиотеку'], ans1: 'к другой', ans2: 'библиотеке' },
+        { id: 15, type: 'complex', text: 'Vervollständige den Satz: „Она идёт к ... ...“', base: 'младший брат', options1: ['младшему', 'младшей', 'младшим'], options2: ['брату', 'брата', 'брате'], ans1: 'младшему', ans2: 'браtu' },
+
+        { id: 16, type: 'select', text: 'Радоваться ... успеху.', base: 'большой', options: ['большому', 'большой', 'большим'], ans: 'большому' },
+        { id: 17, type: 'radio', text: 'Wähle: „unserem Lehrer“', options: ['нашему учителю', 'нашей учителю', 'нашом учителю'], ans: 'нашему учителю' },
+        { id: 18, type: 'select', text: 'Идти к ... выходу.', base: 'запасный', options: ['запасному', 'запасной', 'запасное'], ans: 'запасному' },
+        { id: 19, type: 'select', text: 'Дать корм ... собаке.', base: 'голодная', options: ['голодной', 'голодному', 'голодную'], ans: 'голодной' },
+        { id: 20, type: 'select', text: 'Мы едем к ... дедушке.', base: 'старый', options: ['старому', 'старой', 'старым'], ans: 'старому' }
+    ];
+
+    function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function renderTask(id) {
+        const task = taskData.find(t => t.id === id);
+        const container = document.getElementById(`task-body-${id}`);
+        container.innerHTML = '';
+
+        let html = `<p>${task.text} <em>(${task.base || ''})</em></p>`;
+
+        if (task.type === 'select') {
+            html += `<select id="in-${id}" onchange="checkSelect(${id})">
+                        <option value="">-- Bitte wählen --</option>
+                        ${shuffle([...task.options]).map(o => `<option value="${o}">${o}</option>`).join('')}
+                    </select>`;
+        } else if (task.type === 'radio') {
+            html += `<div class="radio-group" id="rg-${id}">
+                        ${shuffle([...task.options]).map(o => `
+                            <label class="radio-item" id="lbl-${id}-${o.replace(/\s/g,'')}" onclick="checkRadio(${id}, '${o}')">
+                                <input type="radio" name="r-${id}" value="${o}" style="display:none"> ${o}
+                            </label>
+                        `).join('')}
+                    </div>`;
+        } else if (task.type === 'complex') {
+            html += `<div class="complex-layout">
+                        <select id="in-${id}-1" onchange="checkComplex(${id})">
+                            <option value="">-- Teil 1 --</option>
+                            ${shuffle([...task.options1]).map(o => `<option value="${o}">${o}</option>`).join('')}
+                        </select>
+                        <select id="in-${id}-2" onchange="checkComplex(${id})">
+                            <option value="">-- Teil 2 --</option>
+                            ${shuffle([...task.options2]).map(o => `<option value="${o}">${o}</option>`).join('')}
+                        </select>
+                    </div>`;
+        } else if (task.type === 'drag') {
+            html += `<div class="word-bank" id="bank-${id}">
+                        ${shuffle([...task.bank]).map((w, i) => `<span class="drag-item" draggable="true" ondragstart="drag(event)" id="drag-${id}-${i}">${w}</span>`).join('')}
+                    </div>
+                    <div class="drop-zone" id="drop-${id}" ondrop="drop(event, ${id})" ondragover="allowDrop(event)">Hierher ziehen...</div>`;
+        }
+
+        container.innerHTML = html;
+    }
+
+    // Initiales Laden
+    function init() {
+        const main = document.getElementById('exercise-container');
+        taskData.forEach(task => {
+            const card = document.createElement('div');
+            card.className = 'exercise-card';
+            card.id = `card-${task.id}`;
+            card.innerHTML = `
+                <div class="task-header"><span>Aufgabe ${task.id}</span></div>
+                <div id="task-body-${task.id}"></div>
+                <div class="btn-group">
+                    <button class="btn-reset" onclick="resetTask(${task.id})">Zurücksetzen und mischen</button>
+                    <button class="btn-sol" onclick="showSolution(${task.id})">Lösung anzeigen</button>
+                </div>
+            `;
+            main.appendChild(card);
+            renderTask(task.id);
+        });
+    }
+
+    // Feedback Logik
+    window.checkSelect = (id) => {
+        const el = document.getElementById(`in-${id}`);
+        const task = taskData.find(t => t.id === id);
+        el.className = el.value === task.ans ? 'correct' : 'incorrect';
+    };
+
+    window.checkComplex = (id) => {
+        const t = taskData.find(x => x.id === id);
+        const el1 = document.getElementById(`in-${id}-1`);
+        const el2 = document.getElementById(`in-${id}-2`);
+        if(el1.value) el1.className = el1.value === t.ans1 ? 'correct' : 'incorrect';
+        if(el2.value) el2.className = el2.value === t.ans2 ? 'correct' : 'incorrect';
+    };
+
+    window.checkRadio = (id, val) => {
+        const t = taskData.find(x => x.id === id);
+        const labels = document.getElementById(`rg-${id}`).querySelectorAll('.radio-item');
+        labels.forEach(l => l.className = 'radio-item');
+        const target = document.getElementById(`lbl-${id}-${val.replace(/\s/g,'')}`);
+        target.className = 'radio-item ' + (val === t.ans ? 'correct' : 'incorrect');
+    };
+
+    // Drag & Drop Handlers
+    window.allowDrop = (ev) => ev.preventDefault();
+    window.drag = (ev) => ev.dataTransfer.setData("text", ev.target.innerText);
+    window.drop = (ev, id) => {
+        ev.preventDefault();
+        const data = ev.dataTransfer.getData("text");
+        const t = taskData.find(x => x.id === id);
+        const el = document.getElementById(`drop-${id}`);
+        el.innerText = data;
+        el.className = 'drop-zone ' + (data === t.ans ? 'correct' : 'incorrect');
+    };
+
+    // Buttons Handlers
+    window.resetTask = (id) => {
+        renderTask(id);
+    };
+
+    window.showSolution = (id) => {
+        const task = taskData.find(t => t.id === id);
+        if (task.type === 'select') {
+            const el = document.getElementById(`in-${id}`);
+            el.value = task.ans;
+            el.className = 'correct';
+        } else if (task.type === 'radio') {
+            checkRadio(id, task.ans);
+        } else if (task.type === 'complex') {
+            const el1 = document.getElementById(`in-${id}-1`);
+            const el2 = document.getElementById(`in-${id}-2`);
+            el1.value = task.ans1;
+            el2.value = task.ans2;
+            el1.className = 'correct';
+            el2.className = 'correct';
+        } else if (task.type === 'drag') {
+            const el = document.getElementById(`drop-${id}`);
+            el.innerText = task.ans;
+            el.className = 'drop-zone correct';
+        }
+    };
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
