@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bild-Wort-Trainer: Russische Adjektive im Dativ</title>
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --bg: #f4f7f9;
+            --card: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+            background: var(--card);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 3px solid var(--secondary);
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+        }
+
+        .instruction {
+            background: #eef2f7;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 5px solid var(--secondary);
+            font-size: 0.95rem;
+        }
+
+        .exercise-card {
+            background: #fff;
+            border: 2px solid #eaeeef;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .visual-prompt {
+            font-size: 4rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .target-desc {
+            color: #7f8c8d;
+            font-style: italic;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .sentence-display {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            min-height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .drop-slot {
+            min-width: 100px;
+            border-bottom: 2px solid #bdc3c7;
+            padding: 2px 10px;
+            color: var(--secondary);
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .drop-slot:empty::before {
+            content: "_______";
+            color: #ccc;
+        }
+
+        .drop-slot.correct { color: var(--success); border-bottom-color: var(--success); }
+        .drop-slot.incorrect { color: var(--error); border-bottom-color: var(--error); }
+
+        .chip-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .chip {
+            padding: 8px 15px;
+            background: var(--primary);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+
+        .chip:hover { filter: brightness(1.2); }
+        .chip.used { opacity: 0.3; pointer-events: none; }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        .btn-reset { background: #95a5a6; color: white; }
+        .btn-sol { background: var(--secondary); color: white; }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .sentence-display { font-size: 1.1rem; }
+            .chip { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Russisch-Assistent</h1>
+        <h2>Bild-Satz-Zuordnung (Dativ)</h2>
+    </header>
+
+    <div class="instruction">
+        <strong>Anleitung:</strong> Schau dir das Bild an und vervollständige den Satz mit der Präposition <strong>к</strong>.
+        <br>1. Klicke auf die <strong>Wort-Chips</strong>, um die Lücken zu füllen.
+        <br>2. Ein Klick auf ein Wort im Satz schickt es zurück.
+    </div>
+
+    <div id="exercise-list"></div>
+</div>
+
+<script>
+    const exercises = [
+        { id: 1, icon: "🏠🔴", desc: "rotes Haus", start: "Он идёт к", ans: ["красному", "дому"], pool: ["красному", "красная", "дому", "дома"] },
+        { id: 2, icon: "🏥🔵", desc: "blaue Klinik", start: "Она идёт к", ans: ["синей", "клинике"], pool: ["синей", "синюю", "клинике", "клинику"] },
+        { id: 3, icon: "🤝👴", desc: "alter Freund", start: "Я иду к", ans: ["старому", "другу"], pool: ["старому", "старый", "другу", "друга"] },
+        { id: 4, icon: "🏫🏢", desc: "neue Schule", start: "Дети идут к", ans: ["новой", "школе"], pool: ["новой", "новая", "школе", "школу"] },
+        { id: 5, icon: "🌊🏙️", desc: "blaues Meer", start: "Мы подошли к", ans: ["синему", "морю"], pool: ["синему", "синее", "морю", "моря"] },
+        { id: 6, icon: "👨‍🏫📖", desc: "unser Lehrer", start: "Студент подошёл к", ans: ["нашему", "учителю"], pool: ["нашему", "наш", "учителю", "учителя"] },
+        { id: 7, icon: "🌳🏡", desc: "nachbarliches Haus", start: "Он идёт к", ans: ["соседнему", "дому"], pool: ["соседнему", "соседний", "дому", "дома"] },
+        { id: 8, icon: "👩‍⚕️🏥", desc: "gute Ärztin", start: "Я иду к", ans: ["хорошей", "врачихе"], pool: ["хорошей", "хорошую", "врачихе", "врачиху"] },
+        { id: 9, icon: "🏛️⬜", desc: "weißes Gebäude", start: "Мы подошли к", ans: ["белому", "зданию"], pool: ["белому", "белое", "зданию", "здания"] },
+        { id: 10, icon: "🧸👦", desc: "kleiner Junge", start: "Она бежит к", ans: ["маленькому", "мальчику"], pool: ["маленькому", "маленький", "мальчику", "мальчика"] },
+        { id: 11, icon: "👵🍰", desc: "geliebte Oma", start: "Внук бежит к", ans: ["любимой", "бабушке"], pool: ["любимой", "любимая", "бабушке", "бабушку"] },
+        { id: 12, icon: "🏦🏬", desc: "anderer Bank", start: "Он идёт к", ans: ["другому", "банку"], pool: ["другому", "другой", "банку", "банка"] },
+        { id: 13, icon: "👨‍💼💼", desc: "fremder Jurist", start: "Клиент пришёл к", ans: ["чужому", "юристу"], pool: ["чужому", "чужой", "юристу", "юриста"] },
+        { id: 14, icon: "👩‍🦰👗", desc: "jüngere Schwester", start: "Брат идёт к", ans: ["младшей", "сестре"], pool: ["младшей", "младшую", "сестре", "сестру"] },
+        { id: 15, icon: "🪟⬛", desc: "großes Fenster", start: "Кошка прыгнула к", ans: ["большому", "окну"], pool: ["большому", "большое", "окну", "окна"] },
+        { id: 16, icon: "🌲🚶", desc: "entfernter Verwandter", start: "Мы приехали к", ans: ["дальнему", "родственнику"], pool: ["дальнему", "дальний", "родственнику", "родственника"] },
+        { id: 17, icon: "🐕⬛", desc: "schwarzer Hund", start: "Ребёнок подошёл к", ans: ["чёрному", "псу"], pool: ["чёрному", "чёрный", "псу", "пса"] },
+        { id: 18, icon: "🏨🏙️", desc: "letztes Hotel", start: "Туристы подошли к", ans: ["последнему", "отелю"], pool: ["последнему", "последний", "отелю", "отеля"] },
+        { id: 19, icon: "🌊🏔️", desc: "hoher Berg", start: "Альпинисты идут к", ans: ["высокой", "горе"], pool: ["высокой", "высокая", "горе", "гору"] },
+        { id: 20, icon: "🚉📦", desc: "altes Postamt", start: "Машина едет к", ans: ["старой", "почте"], pool: ["старой", "старая", "почте", "почту"] }
+    ];
+
+    let userInputs = {};
+
+    function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function renderExercises() {
+        const list = document.getElementById('exercise-list');
+        list.innerHTML = '';
+        
+        exercises.forEach((ex) => {
+            userInputs[ex.id] = [];
+            const card = document.createElement('div');
+            card.className = 'exercise-card';
+            card.id = `ex-${ex.id}`;
+
+            const poolShuffled = shuffle([...ex.pool]);
+
+            card.innerHTML = `
+                <span class="visual-prompt">${ex.icon}</span>
+                <span class="target-desc">Ziel: ${ex.desc}</span>
+                <div class="sentence-display">
+                    <span>${ex.start}</span>
+                    <span class="drop-slot" id="slot-${ex.id}-0" onclick="removeWord(${ex.id}, 0)"></span>
+                    <span class="drop-slot" id="slot-${ex.id}-1" onclick="removeWord(${ex.id}, 1)"></span>
+                </div>
+                <div class="chip-pool" id="pool-${ex.id}">
+                    ${poolShuffled.map((word, idx) => `<span class="chip" id="chip-${ex.id}-${idx}" onclick="addWord(${ex.id}, '${word}', ${idx})">${word}</span>`).join('')}
+                </div>
+                <div class="btn-group">
+                    <button class="btn-reset" onclick="resetExercise(${ex.id})">Zurücksetzen & Mischen</button>
+                    <button class="btn-sol" onclick="showSolution(${ex.id})">Lösung anzeigen</button>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    window.addWord = function(exId, word, chipIdx) {
+        const input = userInputs[exId];
+        if (input.length >= 2) return;
+
+        const chip = document.getElementById(`chip-${exId}-${chipIdx}`);
+        chip.classList.add('used');
+        
+        input.push({ word, chipIdx });
+        updateDisplay(exId);
+    };
+
+    window.removeWord = function(exId, slotIdx) {
+        const input = userInputs[exId];
+        if (slotIdx >= input.length) return;
+
+        const removed = input.splice(slotIdx, 1)[0];
+        const chip = document.getElementById(`chip-${exId}-${removed.chipIdx}`);
+        chip.classList.remove('used');
+        
+        updateDisplay(exId);
+    };
+
+    function updateDisplay(exId) {
+        const input = userInputs[exId];
+        const ex = exercises.find(e => e.id === exId);
+        
+        for (let i = 0; i < 2; i++) {
+            const slot = document.getElementById(`slot-${exId}-${i}`);
+            slot.innerText = input[i] ? input[i].word : "";
+            slot.className = "drop-slot";
+        }
+
+        if (input.length === 2) {
+            const isCorrect = input[0].word === ex.ans[0] && input[1].word === ex.ans[1];
+            for (let i = 0; i < 2; i++) {
+                const slot = document.getElementById(`slot-${exId}-${i}`);
+                slot.classList.add(isCorrect ? "correct" : "incorrect");
+            }
+        }
+    }
+
+    window.resetExercise = function(exId) {
+        userInputs[exId] = [];
+        const ex = exercises.find(e => e.id === exId);
+        const pool = document.getElementById(`pool-${exId}`);
+        const poolShuffled = shuffle([...ex.pool]);
+        
+        pool.innerHTML = poolShuffled.map((word, idx) => `<span class="chip" id="chip-${exId}-${idx}" onclick="addWord(${exId}, '${word}', ${idx})">${word}</span>`).join('');
+        
+        updateDisplay(exId);
+    };
+
+    window.showSolution = function(exId) {
+        const ex = exercises.find(e => e.id === exId);
+        userInputs[exId] = ex.ans.map(word => ({ word, chipIdx: -1 }));
+        
+        // Disable chips
+        const chips = document.getElementById(`pool-${exId}`).querySelectorAll('.chip');
+        chips.forEach(c => c.classList.add('used'));
+        
+        updateDisplay(exId);
+        // Special case: force color
+        for (let i = 0; i < 2; i++) {
+            document.getElementById(`slot-${exId}-${i}`).className = "drop-slot correct";
+        }
+    };
+
+    window.onload = renderExercises;
+</script>
+
+</body>
+</html>
