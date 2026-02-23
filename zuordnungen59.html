@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matching-Training: Russische Adjektive im Dativ</title>
+    <!-- Polyfill für Touch-Geräte -->
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --error-color: #e74c3c;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --border-color: #dcdde1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 2px solid var(--secondary-color);
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+        }
+
+        .instruction {
+            background: #eef2f7;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            border-left: 5px solid var(--secondary-color);
+        }
+
+        .exercise-block {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 40px;
+            background: #fff;
+            transition: border-color 0.3s;
+        }
+
+        .exercise-block:hover {
+            border-color: var(--secondary-color);
+        }
+
+        h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        /* Matching Grid */
+        .matching-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .match-item {
+            background: #fff;
+            border: 2px solid var(--border-color);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            min-height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .match-item:hover:not(.locked) {
+            border-color: var(--secondary-color);
+            background: #f0f7ff;
+        }
+
+        .match-item.selected {
+            border-color: var(--secondary-color);
+            background: var(--secondary-color);
+            color: white;
+            transform: scale(1.02);
+        }
+
+        .match-item.correct {
+            background: var(--success-color) !important;
+            border-color: var(--success-color) !important;
+            color: white !important;
+            cursor: default;
+        }
+
+        .match-item.incorrect {
+            background: var(--error-color) !important;
+            border-color: var(--error-color) !important;
+            color: white !important;
+        }
+
+        .match-item.locked {
+            pointer-events: none;
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            transition: opacity 0.2s;
+        }
+
+        .btn-reset { background: #95a5a6; color: white; }
+        .btn-solution { background: var(--secondary-color); color: white; }
+        button:hover { opacity: 0.9; }
+
+        @media (max-width: 500px) {
+            .matching-grid { gap: 8px; }
+            .match-item { padding: 8px; font-size: 0.85rem; }
+            .container { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Russisch-Assistent</h1>
+        <h2>Matching-Trainer: Adjektive im Dativ</h2>
+    </header>
+
+    <div class="instruction">
+        <strong>Anleitung:</strong> Klicke zuerst ein Adjektiv in der linken Spalte an und dann das passende Substantiv in der rechten Spalte. <br>
+        <em>Ziel: Übereinstimmung in Genus (Geschlecht) und Dativ-Endung.</em>
+    </div>
+
+    <div id="exercise-list"></div>
+</div>
+
+<script>
+    const exercises = [
+        { id: 1, title: "Maskulinum: Harte Endung (-ому)", pairs: [{l: "молодому", r: "человеку"}, {l: "новому", r: "клиенту"}, {l: "старому", r: "другу"}] },
+        { id: 2, title: "Maskulinum: Zischlaute (-ему)", pairs: [{l: "хорошему", r: "врачу"}, {l: "лучшему", r: "другу"}, {l: "младшему", r: "брату"}] },
+        { id: 3, title: "Femininum: Harte Endung (-ой)", pairs: [{l: "молодой", r: "женщине"}, {l: "новой", r: "клиентке"}, {l: "старой", r: "школе"}] },
+        { id: 4, title: "Femininum: Weiche Endung (-ей)", pairs: [{l: "хорошей", r: "подруге"}, {l: "синей", r: "больнице"}, {l: "дальней", r: "родственнице"}] },
+        { id: 5, title: "Neutrum: (-ому / -ему)", pairs: [{l: "большому", r: "зданию"}, {l: "синему", r: "озеру"}, {l: "новому", r: "окну"}] },
+        { id: 6, title: "Gemischt: Maskulinum & Femininum", pairs: [{l: "высокому", r: "мужчине"}, {l: "высокой", r: "женщине"}, {l: "другому", r: "банку"}] },
+        { id: 7, title: "Personen & Berufe", pairs: [{l: "строгому", r: "преподавателю"}, {l: "любимой", r: "бабушке"}, {l: "незнакомому", r: "юристу"}] },
+        { id: 8, title: "Orte & Richtungen (к ...)", pairs: [{l: "другой", r: "библиотеке"}, {l: "соседнему", r: "дому"}, {l: "этой", r: "школе"}] },
+        { id: 9, title: "Farben im Dativ", pairs: [{l: "голубому", r: "зданию"}, {l: "синей", r: "машине"}, {l: "белому", r: "цветку"}] },
+        { id: 10, title: "Qualitäten", pairs: [{l: "плохому", r: "человеку"}, {l: "прекрасной", r: "погоде"}, {l: "чужому", r: "ребёнку"}] },
+        { id: 11, title: "Alter & Familie", pairs: [{l: "старшему", r: "брату"}, {l: "младшей", r: "сестре"}, {l: "старому", r: "дедушке"}] },
+        { id: 12, title: "Zugehörigkeit", pairs: [{l: "нашему", r: "учителю"}, {l: "вашей", r: "маме"}, {l: "своему", r: "сыну"}] },
+        { id: 13, title: "Zischlaute (Betonung checken)", pairs: [{l: "чужому", r: "дому"}, {l: "большому", r: "окну"}, {l: "хорошей", r: "девочке"}] },
+        { id: 14, title: "Adjektive auf -ний", pairs: [{l: "соседней", r: "аптеке"}, {l: "осеннему", r: "лесу"}, {l: "летней", r: "жаре"}] },
+        { id: 15, title: "Zustände", pairs: [{l: "больному", r: "другу"}, {l: "грустной", r: "песне"}, {l: "интересному", r: "фильму"}] },
+        { id: 16, title: "Gefühle", pairs: [{l: "большой", r: "радости"}, {l: "сильному", r: "страху"}, {l: "доброй", r: "маме"}] },
+        { id: 17, title: "Gegenstände", pairs: [{l: "круглому", r: "столу"}, {l: "деревянной", r: "двери"}, {l: "мягкому", r: "креслу"}] },
+        { id: 18, title: "Wetter & Natur", pairs: [{l: "холодному", r: "ветру"}, {l: "яркой", r: "звезде"}, {l: "чистому", r: "небу"}] },
+        { id: 19, title: "Schule & Lernen", pairs: [{l: "трудной", r: "задаче"}, {l: "новому", r: "слову"}, {l: "умному", r: "ученику"}] },
+        { id: 20, title: "Reisen & Wege", pairs: [{l: "дальнему", r: "пути"}, {l: "быстрому", r: "поезду"}, {l: "лесной", r: "дороге"}] }
+    ];
+
+    let selections = { left: null, right: null };
+
+    function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function createExercise(ex) {
+        const block = document.createElement('div');
+        block.className = 'exercise-block';
+        block.id = `ex-${ex.id}`;
+
+        const h3 = document.createElement('h3');
+        h3.innerText = `Aufgabe ${ex.id}: ${ex.title}`;
+        block.appendChild(h3);
+
+        const grid = document.createElement('div');
+        grid.className = 'matching-grid';
+
+        const leftCol = document.createElement('div');
+        leftCol.className = 'column left-col';
+        const rightCol = document.createElement('div');
+        rightCol.className = 'column right-col';
+
+        // Mische Spalten unabhängig
+        const leftItems = shuffle(ex.pairs.map(p => p.l));
+        const rightItems = shuffle(ex.pairs.map(p => p.r));
+
+        leftItems.forEach(text => {
+            const item = createMatchItem(text, 'left', ex.id);
+            leftCol.appendChild(item);
+        });
+
+        rightItems.forEach(text => {
+            const item = createMatchItem(text, 'right', ex.id);
+            rightCol.appendChild(item);
+        });
+
+        grid.appendChild(leftCol);
+        grid.appendChild(rightCol);
+        block.appendChild(grid);
+
+        // Buttons
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'btn-group';
+        
+        const resetBtn = document.createElement('button');
+        resetBtn.className = 'btn-reset';
+        resetBtn.innerText = 'Zurücksetzen & Mischen';
+        resetBtn.onclick = () => resetExercise(ex.id);
+        
+        const solBtn = document.createElement('button');
+        solBtn.className = 'btn-solution';
+        solBtn.innerText = 'Lösung anzeigen';
+        solBtn.onclick = () => showSolution(ex.id);
+
+        btnGroup.appendChild(resetBtn);
+        btnGroup.appendChild(solBtn);
+        block.appendChild(btnGroup);
+
+        return block;
+    }
+
+    function createMatchItem(text, side, exId) {
+        const div = document.createElement('div');
+        div.className = 'match-item';
+        div.innerText = text;
+        div.dataset.side = side;
+        div.dataset.exId = exId;
+        div.onclick = () => handleSelection(div);
+        return div;
+    }
+
+    function handleSelection(el) {
+        if (el.classList.contains('correct') || el.classList.contains('locked')) return;
+
+        const side = el.dataset.side;
+        const exId = el.dataset.exId;
+        const block = document.getElementById(`ex-${exId}`);
+
+        // Auswahl in der gleichen Spalte ändern
+        block.querySelectorAll(`.${side}-col .match-item`).forEach(item => item.classList.remove('selected'));
+        el.classList.add('selected');
+        selections[side] = el;
+
+        // Wenn beide Seiten gewählt sind
+        if (selections.left && selections.right) {
+            const leftVal = selections.left.innerText;
+            const rightVal = selections.right.innerText;
+            const ex = exercises.find(e => e.id == exId);
+            
+            const isMatch = ex.pairs.some(p => p.l === leftVal && p.r === rightVal);
+
+            if (isMatch) {
+                selections.left.classList.remove('selected');
+                selections.right.classList.remove('selected');
+                selections.left.classList.add('correct', 'locked');
+                selections.right.classList.add('correct', 'locked');
+                selections.left = null;
+                selections.right = null;
+            } else {
+                const l = selections.left;
+                const r = selections.right;
+                l.classList.add('incorrect');
+                r.classList.add('incorrect');
+                setTimeout(() => {
+                    l.classList.remove('incorrect', 'selected');
+                    r.classList.remove('incorrect', 'selected');
+                }, 500);
+                selections.left = null;
+                selections.right = null;
+            }
+        }
+    }
+
+    function resetExercise(id) {
+        const container = document.getElementById('exercise-list');
+        const oldBlock = document.getElementById(`ex-${id}`);
+        const ex = exercises.find(e => e.id === id);
+        const newBlock = createExercise(ex);
+        container.replaceChild(newBlock, oldBlock);
+        selections = { left: null, right: null };
+    }
+
+    function showSolution(id) {
+        const block = document.getElementById(`ex-${id}`);
+        const ex = exercises.find(e => e.id === id);
+        
+        const leftItems = block.querySelectorAll('.left-col .match-item');
+        const rightItems = block.querySelectorAll('.right-col .match-item');
+
+        leftItems.forEach(l => {
+            const pair = ex.pairs.find(p => p.l === l.innerText);
+            rightItems.forEach(r => {
+                if (r.innerText === pair.r) {
+                    l.classList.add('correct', 'locked');
+                    r.classList.add('correct', 'locked');
+                }
+            });
+        });
+    }
+
+    // Initialisierung
+    const list = document.getElementById('exercise-list');
+    exercises.forEach(ex => {
+        list.appendChild(createExercise(ex));
+    });
+</script>
+
+</body>
+</html>
